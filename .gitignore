@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+.env
+vc_booster.session
+logs/
