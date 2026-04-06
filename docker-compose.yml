@@ -1,0 +1,11 @@
+version: '3.8'
+services:
+  vc-booster:
+    build: .
+    container_name: vc-mic-booster
+    restart: unless-stopped
+    environment:
+      - SESSION=your_session_string_here
+      - BOOST_LEVEL=180  # 150-200 range
+    volumes:
+      - ./config.py:/app/config.py
