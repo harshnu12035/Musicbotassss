@@ -19,7 +19,7 @@ app = Client(
     session_string=SESSION
 )
 
-@app.on_message(filters.voice_chat_started)
+@app.on_message(filters.video_chat_started)
 async def on_vc_join(client: Client, message: Message):
     """Auto join VC when started"""
     try:
