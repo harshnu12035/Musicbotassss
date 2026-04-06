@@ -1,7 +1,6 @@
-from pyrogram import Client, filters
+from pyrogram import Client, filters, idle
 from pyrogram.types import Message
 import asyncio
-from session_handler import SessionManager
 from voice_handler import VoiceBooster
 from config import SESSION, BOOST_LEVEL, API_ID, API_HASH
 import logging
@@ -9,17 +8,22 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Initialize
-session_mgr = SessionManager(SESSION)
 voice_booster = VoiceBooster(BOOST_LEVEL)
 target_users = {}  # user_id: boost_status
 
-app = session_mgr.app
+# ✅ FIX: app properly initialize
+app = Client(
+    "vc_booster",
+    api_id=API_ID,
+    api_hash=API_HASH,
+    session_string=SESSION
+)
 
 @app.on_message(filters.voice_chat_started)
 async def on_vc_join(client: Client, message: Message):
     """Auto join VC when started"""
     try:
+        # ⚠️ Note: Ye tabhi kaam karega jab VC lib use hogi (pytgcalls)
         await client.join_group_call(message.chat.id)
         logger.info(f"✅ Joined VC: {message.chat.title}")
     except Exception as e:
@@ -49,40 +53,36 @@ async def unset_boost(client: Client, message: Message):
 @app.on_message(filters.command("status") & filters.me)
 async def status(client: Client, message: Message):
     """Show boost status"""
-    status = "📊 **Boost Status**\n\n"
+    status_text = "📊 **Boost Status**\n\n"
     if target_users:
         for uid in target_users:
-            status += f"• `{uid}`: ✅ Active\n"
+            status_text += f"• `{uid}`: ✅ Active\n"
     else:
-        status += "• No targets\n"
-    status += f"\nBoost Level: `{BOOST_LEVEL}`dB"
-    await message.reply(status)
+        status_text += "• No targets\n"
+    status_text += f"\nBoost Level: `{BOOST_LEVEL}`dB"
+    await message.reply(status_text)
 
-# Real-time voice processing (runs in VC)
+# Background voice processing
 async def process_voice():
-    """Background voice processor"""
     while True:
         try:
-            # Monitor VC audio streams
             for user_id in target_users:
-                # Apply boost to target user's audio
-                # This would integrate with pyrogram's voice chat stream
                 logger.info(f"🔊 Boosting user {user_id} by {BOOST_LEVEL}dB")
-            await asyncio.sleep(0.1)  # Real-time processing
+            await asyncio.sleep(0.1)
         except Exception as e:
             logger.error(f"Voice process error: {e}")
             await asyncio.sleep(1)
 
 async def main():
-    await session_mgr.create_client()
-    
-    # Start voice processor
+    await app.start()  # ✅ FIX
+
     asyncio.create_task(process_voice())
-    
+
     logger.info("🚀 VC Mic Booster Userbot Started!")
-    logger.info("Commands:\n.boost <id> - Enable boost\n.unboost <id> - Disable\n.status - Check status")
-    
-    await idle()
+    logger.info("Commands:\n.boost <id>\n.unboost <id>\n.status")
+
+    await idle()  # ✅ FIX
+    await app.stop()
 
 if __name__ == "__main__":
-    app.run(main())
+    asyncio.run(main())  # ✅ FIX
