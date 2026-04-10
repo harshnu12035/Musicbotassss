@@ -1,7 +1,8 @@
 from pytgcalls import PyTgCalls
 from pytgcalls.types.input_stream import AudioPiped
 from pyrogram import Client
-from config import API_ID, API_HASH, SESSION
+from config import SESSION, API_ID, API_HASH, BOOST_LEVEL
+import asyncio
 
 app = Client(
     "vc_userbot",
@@ -10,32 +11,32 @@ app = Client(
     session_string=SESSION
 )
 
-call = PyTgCalls(app)
+call_py = PyTgCalls(app)
 
 
-async def start_client():
+async def start_vc():
     await app.start()
-    await call.start()
-    print("✅ Client Started")
+    await call_py.start()
+    print("✅ VC Client Started")
 
 
-async def join_vc(chat_id):
+async def join_vc(chat_id, file="input.raw"):
     try:
-        await call.join_group_call(
+        await call_py.join_group_call(
             chat_id,
             AudioPiped(
-                "input.raw",  # ⚠️ same folder me hona chahiye
+                file,
                 bitrate=48000
             )
         )
-        print("🎧 VC Joined")
+        print("🎧 Joined VC")
     except Exception as e:
-        print("❌ Join Error:", e)
+        print(f"❌ Join Error: {e}")
 
 
 async def leave_vc(chat_id):
     try:
-        await call.leave_group_call(chat_id)
-        print("❌ VC Left")
+        await call_py.leave_group_call(chat_id)
+        print("❌ Left VC")
     except Exception as e:
-        print("❌ Leave Error:", e)
+        print(f"Error: {e}")
